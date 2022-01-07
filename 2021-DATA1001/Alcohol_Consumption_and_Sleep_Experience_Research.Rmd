@@ -1,0 +1,135 @@
+---
+title: "Exploring The Relationship Between Alcohol Consumption And Sleeping Experiences"
+author: "Group #5 in Canvas"
+subtitle: "Project 2"
+date: "University of Sydney | DATA1001 | April 2021"
+output:
+  html_document:
+    fig_caption: yes
+    number_sections: yes
+    self_contained: yes
+    theme: flatly
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    code_folding: hide
+---
+
+<br>
+
+# Executive Summary
+This report explores the relationship between alcohol consumption and sleep experience among university students. Using plots and linear regression, this report shows that sleeping quality has been improved by alcohol, sleeping duration after drink has weak correlation with usual sleep duration, and drink frequency doesn’t affect the usual sleep duration. 
+
+<br>
+
+# Full Report
+
+## Initial Data Analysis (IDA)
+The target participants for this research study are mainly university students. The survey was posted on social media(USYD First-Year Students 2020 Facebook group and ED discussion). 
+
+### Structure:
+
+```{r}
+data = read.csv("D:/2021-1/DATA1001/project2/final/surveydata_final.csv")
+dim(data)
+```
+
+There were 43 participants(number of rows) and 10 questions were asked(number of columns).
+
+```{r}
+data$health_rating = factor(data$health_rating)
+str(data)
+```
+
+This research used the results of 5 questions among 10 questions and are represented by the following variable names:  drink_freq(weekly drink frequency), drink_sleep_time(sleeping duration of the drinking nights), feel_after_drink(feeling after awake from drinking night), usual_sleep_time(usual sleeping duration without drinking), and usual_feel(feeling after awake from a usual night without drink).
+
+### Limitations:
+i) Considering the fact that the 43 participants is a small number and most of the participants were University of Sydney’s 1st year students, our research may have limitations in generalisation.
+ii) This research assumes that the difference between feel_after_drink and usual_feel is solely based on alcohol consumption. However, since feeling after sleep can be affected by multi-factors, the research regarding these two variables should be investigated further. 
+iii) The other limitation in the data is the self-health rating. It could be affected by both physical and mental aspects; However, we only took the physical aspects in the survey. 
+
+
+<br>
+
+## Research Questions 
+
+### Will you feel worse in an after-drinking morning than a non-drinking morning?
+
+```{r}
+library(ggplot2)
+data$feel_after_drink= factor( data$feel_after_drink, levels=c('Great', 'Good', 'Fair', 'Bad','Terrible'))
+data$usual_feel= factor( data$usual_feel, levels=c('Terrible', 'Bad', 'Fair', 'Good','Great'))
+p =ggplot(data, aes(x= usual_feel))
+p + geom_bar(aes(fill=feel_after_drink)) + scale_fill_viridis_d()
+```
+
+This graph used feel_after_drink (y-axis) and usual_feel (x-axis) as two variables to compare the change in participant’s feeling after waking between drinking nights and non-drinking nights.
+From each column, the different coloured rectangles represent different feelings after waking from a drinking night. The changes of feeling could be observed from the changes in variables. That is, if the category that coloured rectangle refers to is different from the category of x-axis, this means the feeling for the participant had changed from x-axis to coloured rectangle. If the feeling for both x-axis and coloured rectangle matches, it means feelings had not been changed. 
+
+Overall, 11 participants felt worse, 9 participants the same, and 23 participants better after drinking. Therefore, as more than half of the participants answered they felt better, the result reported that the feeling in an after-drinking morning is better than a non-drinking morning. 
+
+### Do long-duration sleepers also sleep longer after drinking?
+
+```{r}
+#linear regression : x=usual_sleep_time , y= drink_sleep_time
+  #1. Produce a scatter plot
+  plot(data$usual_sleep_time, data$drink_sleep_time, main="Linear Regression Sleep time", xlab="usual_sleep_time",
+       ylab="drink_sleep_time", pch=19)
+
+  #2. Produce a Regression line
+  abline(lm(data$drink_sleep_time ~data$usual_sleep_time ))
+  
+  #3. Calculate the correlation coefficient
+  cor(data$drink_sleep_time,data$usual_sleep_time) #0.3007293
+  
+  #4. Produce a residual plot 
+  data.lm = lm(data$drink_sleep_time ~ data$usual_sleep_time) 
+  data.res = resid(data.lm)
+  plot(data$usual_sleep_time, data.res, 
+       ylab="Residuals", xlab="usual_sleep_time", 
+       main="residual plot") 
+  abline(0, 0)                  # the horizon
+```
+
+This scatter plot used drink_sleep_time and usual_sleep_time variables to illustrate whether long-duration sleepers also sleep longer after they drink. By drawing the linear regression line and calculating the correlation coefficient 0.3007293, this model indicates drink_Sleep_time and usual_sleep_time has a weak correlation. Hence, long-duration sleepers are not necessarily, but might sleep longer after drinking compared to the short-duration sleepers.
+As points in the residual plot seem random without any trends (homoscedastic), this linear regression is a reasonable model to analyse the data. 
+
+### Will drinking frequency affect your sleeping time? 
+
+```{r}
+data$drink_freq= factor( data$drink_freq, levels=c('0 to Once', 'Twice to Three times', 'Four to Five times'))
+p3 = ggplot(data=data, aes(x=factor(drink_freq),y=usual_sleep_time))  
+p3 + geom_boxplot() 
+```
+
+Initially, the assumption made was that drinking frequency has an inverse relationship with usual_sleep_time. However, the actual results illustrate that average of usual_sleep_time stays the same regardless of drinking frequency. 
+The result could be inaccurate because among 43 participants, only one person answered to the ‘Four to Five times’ and 9 people answered to the ‘Twice to Three times’, which is a small amount to represent each frequency group. Considering the fact that most of the participants were university 1st year students, further research should be done with more participants from different age occupations. 
+
+<br>
+
+## Related Articles
+In general, some articles suggested that the symptoms of sleep disorder such as short sleep duration and poor sleep quality can be caused by alcohol consumption for all ages. Especially about drink frequency, one article presented higher drink frequency leads to greater insomnia rate among elderly who are over 50.
+<br>
+
+## References
+Chaput, J. P., McNeil, J., Després, J. P., Bouchard, C., & Tremblay, A. (2012). Short sleep duration is associated with greater alcohol consumption in adults. Appetite, 59(3), 650-655.
+
+Devenney, L. E., Coyle, K. B., Roth, T., & Verster, J. C. (2019). Sleep after Heavy Alcohol Consumption and Physical Activity Levels during Alcohol Hangover. Journal of Clinical Medicine, 8(5), 752. doi:10.3390/jcm805075
+
+Canham, S. L., Kaufmann, C. N., Mauro, P. M., Mojtabai, R., & Spira, A. P. (2015). Binge drinking and insomnia in middle-aged and older adults: the Health and Retirement Study. International journal of geriatric psychiatry, 30(3), 284–291. https://doi.org/10.1002/gps.4139
+
+<br>
+
+## Acknowledgments
+
+### Team Members
+
+Seunghyun Lee
+Yu Jin
+Jinghe Li
+Pin-Han Lee
+
+### Team Contribution
+
+All members participated in all of our meetings and we did research, dicuss, and write the report together.
+
