@@ -1,0 +1,524 @@
+---
+title: "Assignment 1 Report"
+output: 
+  bookdown::html_document2:
+    fig_caption: yes
+    number_sections: yes
+    code_folding: hide
+    toc: true
+    toc_depth: 4
+    toc_float: true
+---
+
+# Introduction
+<font size="4" bold><b>General discussion of the data as a whole </b></font> 
+
+<b>The survey (Data) </b>
+
+This report is about the survey result among students who attend DATA 2X02 units (DATA 2002 and DATA 2902) in the 2021 second semester.
+
+The survey was notified through the post on Ed (a website; an online community for every staff member and student to communicate) and post on Canvas (a web/app service; an online service for every staff member and student to share information regarding each unit) written by professor Garth's account. The platform 'Google Form' was used to create and deploy the survey. This survey was composed of 23 questions which were multiple-choice (with and without multi-selection) questions, free-response questions, and checkbox typed questions. 
+
+<b> Questions that need improvement to generate more useful data </b>
+
+For free-response questions, the survey might have given the choice or certain format of the answer to not allow too much variability among the answer. This is because data with high variability  can easily become non-useful data.   For example, the question asking "What do you typically say before signing off your name in an email?", there were 'kind regards', 'best regards', 'warm regards' among different the answer. There was also an answer like 'Any adverb + Regards.' or 'Something Regards.' which can be considered as all three answers ('kind regards', 'best regards', 'warm regards') and even include more answers that ends with regards. Since there are lots of variances, cleaning and categorizing the answers are difficult, which decreases the usability of the data. One other critical example question that can be applied to this issue is the question asking 'How tall are you?'. Since we didn't provide any restrictions including units, some people wrote down in cm, others m, and others feet.   Likewise, if this survey aims to be used in many different ways, this survey should have given more restrictions to the free-response questions.
+
+On top of that, the questions that ask the surveyors to rate their feelings could have been more specific about which scale means which status. Scaling oneself, and especially scaling oneself about their own emotions are often subjective. The way the individuals understand the scale and reflect themselves is highly dependent on the individual. Therefore, to make this data more interpretable and useful, we should at least have a common agreement among individuals which scale refers to which feeling status. Of course, some research wants subjective scalings, but generally, having a common understanding of grades often leads to more precise interpretation. 
+
+One more issue might be arise to the was 'How are you finding DATA2002 so far'. Since the survey was targeting both students in DATA2002 and DATA2902, this question might be misinterpreted by the students who take DATA2902 (they might either answered about their current unit DATA2902, or they might assume it as DATA2002 and guess its difficulty), Therefore the question should be phrased like 'How are you finding DATA2X02 that you are currently attending so far' to make this data more useful. 
+
+<b> Sampling and bias </b>
+
+The responses were anonymous (students did not have to log in) and were not forced to answer all of the answers (if the student didn't want to answer, they could not answer the question). 
+
+The population of this survey data is 754 students, consist of 696 students in DATA 2002 and 58 students in DATA 2902. Among them, 211 survey participants became the sample of this research. 
+
+This sample is not a random sample as there is non-response bias. Even though the surveyor shared the link through Ed and Canvas which contains every student, whether to take a survey or not was each individual students' choice. If there was a underlying common factor that distinguishes the people who participated the survey or not, it might not only work as a co-factor but also the people who have/do not have that common factor are under-represented in this sample. For example, if the reason why people didn't take the survey was that 'they don't check Ed and Canvas often', then this means the students who don't check the Ed and Canvas often were under-represented. The performance-related questions regarding this unit such as "How do you self-assess your r_coding ability", "How are you finding data2002 so far" are subjected to this bias as students who often study hard and don't procrastinate tend to check the announcements on Ed and Canvas early. The questions regarding the feeling of isolation, "On a scale from 0 to 10 please rate your current feeling of loneliness", can be subject to this bias too as online-based college life makes students feel lonely, and not communicating with friends online will make students feel more isolated. 
+
+Moreover, there can be measurement bias as there are some students who have difficulty understanding English. Some students who don't use English as their first language can misinterpret the questions. All of the survey questions are subject to this bias. Especially, the questions such as "If there is an event on Wednesday, and you are notified it has been moved forward 2 days, which day is the event?" can be subject to this measurement bias. 
+
+Another possible measurement bias can be applied to sensitive questions such as "On a scale from 0 to 10, please rate your current feeling of loneliness".
+
+<b> Report overview </b> 
+
+This report first explores the data, then conduct some hypothesis test to describe 4 research questions : 
+'Does the number of COVID tests a student has taken in the past two months follow a Poisson distribution?', 
+'If the scale was 0 to 10, does the mean of student’s self-evaluated loneliness greater than 5?',
+'Do students attending DATA2902 more confident in math than students attending DATA2002?' and 
+'Is there an association between the dominant hand and whether the students are currently located in Australia?'. 
+
+# Preparing Tests 
+
+## Import Package 
+
+Load the R packages that is necessary for the analysis. In this report, we used package bookdown, tidyverse, ggplot2, janitor, readr, and rmarkdown. We explicitly imported tidyverse, ggplot2, janitor which are commonly used. 
+
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(janitor)
+```
+
+## Import Dataset 
+
+Import the CSV that contains DATA2X02 Survey Responses data using the `read_csv` function in readr package. 
+
+```{r, message=FALSE}
+data =readr::read_csv("DATA2x02 survey (Responses) - Form responses 1.csv")
+```
+
+Using the `clean_names` in `glimpse` function,  reformat the column name of the data by the snake case. 
+
+```{r}
+clean_data = janitor::clean_names(data)
+```
+
+The top six rows of the data with cleaned names looks like the below table. 
+
+```{r}
+rmarkdown::paged_table(head(clean_data))
+```
+
+The whole size of the data is composed of `r {ncol(clean_data)}` columns(features) with `r {nrow(clean_data)}` rows(sample). 
+
+## Extract The Necessary Information 
+
+This report only uses six columns of the given data.Those six columns are : `in_the_past_2_months_how_many_times_have_you_had_a_covid_test`, `on_a_scale_from_0_to_10_please_rate_your_current_feeling_of_loneliness `, `how_do_you_self_assess_your_mathematical_ability`, `which_unit_are_you_enrolled_in`,`are_you_currently_in_australia`,`what_is_your_dominant_hand` . From our `clean_data`, the data consist of only these  six columns will be extracted and newly created. This new data is stored in `compact_data`. 
+
+```{r}
+compact_data = select(clean_data,in_the_past_2_months_how_many_times_have_you_had_a_covid_test, on_a_scale_from_0_to_10_please_rate_your_current_feeling_of_loneliness, how_do_you_self_assess_your_mathematical_ability, which_unit_are_you_enrolled_in,are_you_currently_in_australia,what_is_your_dominant_hand)
+```
+
+Since column names are too long, this report renamed the columns as below : 
+
+```{r}
+old_names = colnames(compact_data)
+colnames(compact_data) <- c('covid_test_freq','loneliness', 'math_confidence','unit_type', 'in_australia','dominant_hand')
+new_names = colnames(compact_data)
+rbind(old_names, new_names)     
+```
+
+The top six rows of the data with only 6 columns with cleaned names looks like the below table.
+
+```{r}
+rmarkdown::paged_table(head(compact_data))
+```
+
+There are few NA(null)  values in the data. 
+
+```{r, warning=FALSE, message=FALSE}
+c (sum(is.na(compact_data$covid_test_freq)), sum(is.na(compact_data$loneliness)), sum(is.na(compact_data$math_confidence)),
+   sum(is.na(compact_data$unit_type)), sum(is.na(compact_data$in_australia)), sum(is.na(compact_data$dominant_hand)))
+compact_data = remove_empty(compact_data)
+original_data=compact_data #now we wil keep the final cleaned data in the 'original_data' variable
+```
+
+We dropped the row that has 'NA' for all 6 rows which results in `r {nrow(compact_data)}`
+
+# Test Results 
+
+For the $\alpha$, we set  0.05 for all of the tests.
+
+## Question 1. Does the number of COVID tests a student has taken in the past two months follow a Poisson distribution? 
+
+### Motivation : 
+
+The COVID is the world-wide hot issue. People are often anxious about having COVID and often take the COVID tests nowadays. Motivated by this fact, this research question is asking whether the number of COVID tests a student has taken in the past two months follow a Poisson distribution.
+
+### Data Cleaning : 
+
+For this research question, we used the data below. We excluded the row that has NA in the `covid_test_freq` column. Then we counted the number of students that belongs to each number of COVID tests they took in the past two months.  
+
+```{r}
+compact_data = compact_data %>% 
+  filter(!is.na(covid_test_freq))
+y = vector(mode = "integer",length = 11)
+for (index in c(0:10)){
+  y[index+1] = sum(compact_data$covid_test_freq == index)
+}
+```
+
+### Why used the Chi-Squared tests for discrete distribution (goodness of fit): 
+
+For this hypothesis testing, this report conducted Chi-Squared tests for discrete distribution (goodness of fit). As the number of COVID test that students get works like the group names, it would be treated as categorical variable in this case. Moreover, the question wants to test whether the sample is taken from a population with a Poisson distribution function. As poisson distribution is discrete distribution, this report conducted chi-squared tests for discrete distributions. Since the question is about one population, we don't take test for homogeneity as our option.
+
+### Hypothesis 
+
+<b>H_0</b> : The number of COIVD tests a student has taken in the past two months come from a Poisson distribution.
+
+<b>H_1</b> : The number of COIVD tests a student has taken in the past two months do not come from a Poisson distribution.
+
+### Assumptions 
+
+<b>Assumption_1</b>: Observations are independent. 
+
+The Assumption_1 is likely satisfied as one of the students COVID tests does not affect to other students' COVID test frequency. This may not be completely true if there are best friends or roommates that effects the COVID test frequency, but it's at least approximately true.  
+
+<b>Assumption_2</b>: The expected frequencies should be all equal to or greater than 5. ( $ei = np_i ≥ 5$. )
+
+To check this assumption, estimate the lambda parameter and get the probability from the Poisson. 
+
+```{r}
+x =0:10
+n = sum(y) #total number of samples
+k = length(y) #number of groups 
+lam = sum(y * x)/n
+p = dpois(x, lambda = lam) 
+``` 
+
+Since the sum of all probability should be 1, we adjust the last probability of Poisson probability.
+
+```{r}
+ p[11] = 1 - sum(p[1:10])
+```
+
+By multiplying the total number of sample that is not NA to the poisson distribution, we can check that assumption e_i >= 5 is not satisfied by all cells. 
+```{r}
+ey = n * p
+ey >= 5
+```
+
+Therefore, we combine the last 8 categories together to satisfy the Assumption_2 and update the values (observed values, expected values, probability, length ) 
+
+```{r}
+yr = c(y[1:3], sum(y[4:11]))
+eyr = c(ey[1:3], sum(ey[4:11]))
+pr = c(p[1:3], sum(p[4:11]))
+kr = length(yr)
+```
+
+Now the assumption_2 is satisfied. 
+
+### Test Statistic : 
+
+The statistic is 
+
+ $T = \sum_{i=1}^4 \frac{(Y_i-e_i)^2}{e_i}$. Under $H_0$, $T \sim \chi_{2}^2$ .
+
+### Observed Test Statistic 
+
+```{r}
+t0 = sum((yr - eyr) ^2/ eyr)
+```
+The chi-squared test statistic is `r {t0}` .
+
+### P-value 
+```{r}
+pval = 1 - pchisq(t0, df = (kr-1-1))
+```
+
+The p-value was `r {pval}`.
+
+### Decision
+
+Since the p value is much smaller than 0.05, there is strong evidence in the data against `H_0`. Hence the number of COVID tests a student has taken in the past two months does not follow a Poisson distribution. 
+
+Through the visualization, there seems to be difference between Poisson disribution andthe sample's distribution. Through the thorough chi-square test, by obtaining small p-value, we can strongly say that the does not follow a Poisson distribution.
+
+```{r,fig.cap = "Barplot for the poisson distribution and the given data"}
+par(mfrow = c(1,2)) 
+barplot(table(rpois(n=10000, lambda = lam)), ylab = "Count", main = "Barplot for the poisson distribution")
+barplot(y, main="Barplot for the given data")
+```
+
+## Question 2. If the scale was 0 to 10, does the mean of student's self-evaluated loneliness greater than 5?
+
+### Motivation : 
+
+The UCLA 3-Item Loneliness Scale was the inspiration for this test. It is a scale that expresses 3 as lonely, and 9 as most lonely, and treat 6 (inclusive) as the threshold for the state of lonely. That is people who score 3 to 5 is not lonely, and people who score 6 to 9 is lonely. 
+
+Since 3 to 9 scale has 7 possible values and 6 is the median of those 7 numbers, if we apply this to our survey which scales 0 to 10, 5 (inclusive) which is the median of those 11 numbers may be threshold for state of lonely. That is, students who score 0 to 4 is not lonely, while students who scored 5 to 10 is lonely. 
+
+There is a limitation that this approach assumes the linear scale. That is the difference between a loneliness score of 1 and 2 is the same as the difference between a loneliness score of 9 to 10. Further elaborative tests are needed. 
+
+### Data Cleaning : 
+
+For this research question, we used the data below. We excluded all the rows that contain NA in the `loneliness` column. Then, we extracted the `loneliness` column only.
+
+```{r}
+compact_data = original_data
+compact_data = compact_data %>% 
+  filter(!is.na(loneliness))
+compact_data = compact_data$loneliness
+```
+
+### Why used the one sample t-test: 
+
+To answer this research question, this report used the one-sample t-test. The research question is asking the average of the loneliness score of all students, which in this report treated as numerical variable. The integer outcomes are considered as a discrete measurement of an underlying continuous variable. (The further research is needed to discuss whether the score actually quantifies the subjective amount of loneliness that students feel.)
+
+Having said that, this variable does not follows the normal distribution. To check this, we first draw the histogram. 
+
+```{r, fig.cap="Histogram of loneliness"}
+hist(compact_data, main = "Histogram of loneliness", xlab = "loneliness")
+```
+However, as the sample size `r {nrow(compact_data)}` is large enough , we can apply the Central Limit Theorem to approximate that the sample means will follow a normal distribution. 
+
+Therefore, it seems reasonable to use one-sample t-test other than less powerful one sample tests that we can conduct. 
+
+### Hypothesis 
+
+<b>H_0</b> : The mean of student's self-evaluated loneliness score is 5.  
+( $\mu = 5$ )
+
+<b>H_1</b> : The mean of student's self-evaluated loneliness score is greater than 5.  
+
+( $\mu > 5$ )
+
+(This is one side test and reason why it is 'more than 5' is because we are concerning about student's loneliness. We are looking whether the average of students' loneliness score meets the minimum threshold for state of lonely.)
+
+### Assumptions 
+
+<b>Assumption_1</b>: The sample is independently and identically distributed, and follows the Normal distribution.
+
+This is satisfiable as one of the student's loneliness score does not give an impact to other student's loneliness score. Moreover, the Normal distribution assumption can be satisfied. Even though the histogram in the 'why used the one-sample T-test'in previous section seems it is not normally distributed, since we have large enough sample size, by the Central Limit Theorem, we can still approximate the sample means as following a normal distribution. 
+
+### Test Statistic : 
+
+The test statistic for one sample t-test is $T = \frac{\bar{X}-\mu_0}{\frac{S}{\sqrt(n)}}$
+
+### The one sample t-test
+
+```{r}
+t.test(compact_data, mu = 5, alternative = "greater")
+```
+
+### Observed Test Statistic 
+
+The test statistic for conducted one-sample t-test was `r {t.test(compact_data, mu = 5, alternative = "greater")$statistic} `. 
+
+### P-value 
+
+The P-value for conducted one-sample t-test was `r {t.test(compact_data, mu = 5, alternative = "greater")$p.value} `. 
+
+### Decision
+
+Since p-value is less than 0.05, there is strong evidence against H_0. Hence we reject the null hypothesis and conclude that the average of the self-evaluated loneliness of students (from scale 0 to 10) greater than 5 in  $\alpha$ = 0.05 level of significance. That is, generally the students were in lonely mood. 
+
+As discussed in the 'motivation' and 'why used one-sample t-test section', there are two limitations for this research setting. First, this design assumes the linear scale. Second, by interpreting the `loneliness` as numeric value rather than categorical, this designs assumes that the score actually quantifies the subjective amount of loneliness that students feel. Further elaborative researches are needed in to make the conducted hypothesis testing more thorough.
+
+## Question 3. Do students attending DATA2902 more confident in math than students attending DATA2002? 
+
+### Motivation : 
+
+According to the unit outline, there are some differences in prerequisites of DATA2002 and DATA2902. For most of the units except MATH1905 and MATH1XXX, DATA2902 required a mark of 65 or above while DATA2002 only required the attendance experience. However, for MATH1905 and MATH1XXX, if students attend those two units, they are eligible for both DATA2002 and DATA2902 regardless of their grades.   
+Focusing on the fact that people who just attend two math units can be eligible to DATA2902,  we can infer that the students who are familiar with math can follow the advanced DATA unit without any big difficulties. This implies that the school expects the students who are good/or at least interested to do well on DATA units. 
+Starting from this unit outline, this report ended up questioning whether the students in advanced DATA2902 units are more likely to feel confident in their math ability than students who are not attending the advanced DATA2902 units.  
+
+### Data Cleaning : 
+
+For this research question, we used the data below. We selected only the `unit_type` and `math_confidence` column. We then excluded the row that has NA in `unit_type` or `math_confidence` column. Using these cleaned data, we separated the data into two groups : students who attend DATA2002 (as `data2002`) and students who attend DATA2902 (as `data2902`)
+
+```{r}
+compact_data = original_data
+compact_data = compact_data %>% 
+  filter(!is.na(math_confidence)) %>%
+  filter(!is.na(unit_type)) 
+data2002 = compact_data %>% filter(unit_type =="DATA2002")
+data2902 = compact_data %>% filter(unit_type != "DATA2002")
+```
+
+### Why used the Welch Two-Sample T-test : 
+To answer this research question, this report used the Welch Two-Sample t-test. The research question is asking two different group's average, which involves one categorical variable (`unit_type`) and one numerical variable (`math_confidence`). However, we didn't chose the two-sample t-test. This is because the variance of DATA2002 units and DATA2902 units seem different to violate the "equal underlying population variances" assumption for two sample t-test.
+
+To check this, we first draw the histogram for math confidence of students in DATA2002 and DATA2902 which had quite different shape. 
+
+```{r, fig.cap="Histogram of Math confidence of each students in MATH2002 and MATH2902"}
+par(mfrow = c(1,2))
+hist(data2002$math_confidence, main = "Histogram of DATA2002 math confidence", xlab = "math confidence")
+hist(data2902$math_confidence, main = "Historgram of DATA2902 math confidence", xlab = "math confidence")
+```
+
+On top of that, each interquartile ranges of comparative box plots were different. 
+
+```{r, fig.cap="Comparative box plot of math confidence of each students in MATH2002 and MATH2902"}
+ggplot(compact_data, aes(unit_type, math_confidence)) +
+  geom_boxplot()+
+  geom_jitter(width=0.15, size = 3, colour = "blue")+
+  theme_bw(base_size = 28)+
+  labs(x="", y="MATH CONFIDENCE")
+```
+
+As the variance of DATA2002 and DATA2902 were different, this report used the Welch two-sample t-test rather than using two sample t-test. 
+
+### Hypothesis 
+
+<b>H_0</b> : The average of math confidence rates in DATA2002 group is equal to the average of math confidence rates in DATA2902 group. ( $H_0: \mu_X = \mu_Y$ )
+
+<b>H_1</b>: The average of math confidence rates in DATA2002 group is less than the average of math confidence rates in DATA2902 group. ( $H_1: \mu_X < \mu_Y$ ) 
+
+The reason why it is one-sided less than is because we wanted to test whether DATA2002 students are less confident on math compare to DATA2902 students which aligns with the university's prerequisites.  
+
+### Assumptions 
+
+<b>Assumption_1</b>: Math confidence in DATA2002 are independently and identically distributed, and follows the Normal distribution.
+
+This is satisfiable as one of the student's confidence in math does not impact other student's confidence in math. Moreover, the Normal distribution assumption can be satisfied. Even though the histogram in the 'why used the Welch Two-Sample T-test' seems it is not normally distributed, since we have large enough sample size, by the Central Limit Theorem, we can still approximate the sample means as following a normal distribution. 
+
+<b>Assumption_2</b>: Math confidence in DATA2902 are independently and identically distributed, and follows the Normal distribution. 
+
+This is satisfiable as one of the student's confidence in math does not impact other student's confidence in math. Moreover, the Normal distribution assumption can be satisfied. Even though the histogram in the 'why used the Welch Two-Sample T-test' seems it is not normally distributed, since we have large enough sample size, by the Central Limit Theorem, we can still approximate the sample means as following a normal distribution. 
+
+
+<b>Assumption_3</b>: Math confidence in DATA2002 is independent of Math confidence in DATA2902. 
+
+This is satisfiable as one of the DATA2002 student's confidence in math does not impact other student in DATA2902's  confidence in math.
+
+### Test Statistic : 
+
+The statistic for welch is 
+
+$Welch statistic = \frac{\bar{X}-\bar{Y}}{\sqrt{{\frac{S_x^2}{n_x}} + {\frac{S_y^2}{n_y}}}}$
+
+### The Welch Two-Sample T-test
+
+```{r}
+t.test(data2002$math_confidence, data2902$math_confidence, alternative = "less")
+```
+
+### Observed Test Statistic 
+
+Welch's t-test statistic was `r {t.test(data2002$math_confidence, data2902$math_confidence, alternative = "less")$statistic} `. 
+
+### P-value 
+
+p-value was `r (t.test(data2002$math_confidence, data2902$math_confidence, alternative = "less"))$p.value`.
+
+### Decision
+
+Since p-value is less than 0.05, there is strong evidence against H_0. Hence we reject the null hypothesis and conclude that the average of the math confidence rates in DATA2002 group is less than the average of math confidence rates in DATA2902 (Advanced unit) group at the $\alpha$ = 0.05 level of significance.
+
+c.f. Since variance difference should be thoroughly tested, and as some people might insist that difference in the two variance does not affect the test, we can conduct two sample t-test too. For the two sample t-test, the p-value was `r t.test(data2002$math_confidence, data2902$math_confidence, alternative = "less", var.equal = TRUE)$p.value` which is also less than the $\alpha$ , leading to the same conclusion. 
+
+
+```{r,message=FALSE, warning=FALSE, results="hide"}
+t.test(data2002$math_confidence, data2902$math_confidence, alternative = "less", var.equal = TRUE)
+```
+
+## QUESTION4: Is there an association between the dominant hand and whether the students are currently located in Australia? 
+
+### Motivation : 
+
+According to an article, the country with the most left-handed people was Netherlands(13.23%) followed by United States(13.10%), Canada(12.8%), United Kingdom(12.24%), France(11.15%), and Germany(9.83%). Since about 10% of Australian were left-handed people, Australia can be also the top-tier country that has left-handed people. 
+
+Inspired by this article, curiosity extends to ask whether the dominant hand is associated with a certain nation. Since Australia was one of the top-tiered nations with a comparatively large proportion of left-handed people, this article ended up asking an interesting question, 'whether the hand dominance related to the students in Australia' . Even if a direct link between nationality and current location may be arguable(as it is not necessarily Australian if they are currently in Australian. On the other hand, because of the border-closure due to COVID, we have a comparatively high chance to have Australians if they answer they are currently in Australia.), it still seemed interesting to ask the relationship of the dominant hand of students in DATA units and the students current location. This question is also suitable for our population (students who attends DATA2X02 units) as students have diverse nation (which might be also arguable).   
+
+### Data Cleaning : 
+
+For this research question, we used the data below. We excluded the rows that contains NA in `in_australia` column and `dominant_hand` column. As ambidextrous students are not what we are interested, we excluded the data that has `Ambidextrous` in the `dominant_hand` column. Then We selected only the `in_australia` and `dominant_hand` column. 
+
+```{r}
+compact_data = original_data
+compact_data = compact_data %>% 
+  filter(!is.na(in_australia)) %>%  
+  filter(!is.na(dominant_hand))  %>%   
+  filter(dominant_hand !="Ambidextrous")
+compact_data = select(compact_data, in_australia, dominant_hand)
+```
+
+### Why used the Chi-Squared Test for Independence : 
+
+To answer this research question, this report used the Chi-Squared Test for Independence. Since the two variables we are looking at are both categorical, and as we are looking for independence between two variables, we chose chi-squared test for independence. Since all of the expected cell counts for matrix that groups dominant hand (`dominant_hand`) and whether the student is currently in Australia (`in_Australia` ) are equal to or greater than 5, we sticked to the Chi-Sqqure Test for Independence. 
+To check this, draw the matrix that has `dominant_hand` for its column and `in_australia` for its row.
+
+```{r}
+y_mat = table(compact_data)
+y_mat
+```
+
+Since one of the cell is equal to 5 which is the border, we might also conduct the Fisher's exact test to support our test result.
+
+### Hypothesis 
+ 
+<b>H_0</b> : The hand dominance is independent to whether the student is currently in Australia. ( $ p_{ij} = p_{i\bullet}p_{\bullet j}, \quad i=1,2; \ j=1,2$ where $p_{i\bullet}$ is the each row's total and $p_{\bullet j}$ is each column's total. )  
+
+<b>H_1</b>: The hand dominance is not independent to whether the student is currently in Australia. ( Not all equalities hold ) 
+
+
+### Assumptions 
+
+<b>Assumption_1</b>: Independent Observation 
+
+This is satisfiable as one of the student's hand dominance does not impact other student's hand dominance. Also, one of the student's residence in terms of country does not impact other student's residence in terms of country. 
+
+<b>Assumption_2</b>: Each cell count is equal to or greater than 5. 
+
+This is satisfiable as written in the previous 'why used the Chi-Squared Test for Independence section'. 
+
+### Test Statistic : 
+
+The statistic for the chi-squared test for independence is 
+$\displaystyle T = \sum_{i=1}^2\sum_{j=1}^2\frac{(Y_{ij}-e_{ij})^2}{e_{ij}}$ Under H_0. $T \sim \chi_{1}^2$
+
+### The Chi-Squared Test for Independence 
+
+```{r, warning=FALSE}
+chisq.test(y_mat, correct=FALSE)
+```
+
+### Observed Test Statistic 
+
+The test statistic  was `r {chisq.test(y_mat, correct=FALSE)$statistic} `. 
+
+### P-value 
+
+The p-value was `r chisq.test(y_mat, correct=FALSE)$p.value`.
+
+### Decision
+
+Since p-value is greater than 0.05, the data is consistent with the null hypothesis. Therefore, the hand dominance and whether or not students are currently living in the Austria is independent. 
+
+c.f. As one cell contained 5 (border of satisfying the assumption) we can conduct the Fisher's exact test too. For the Fisher's exact test, the p-value was `r fisher.test(y_mat)$p.value` which is also greater than the $\alpha$ leading to same conclusion. 
+
+```{r,message=FALSE, warning=FALSE, results="hide"}
+fisher.test(y_mat)
+```
+
+# Conclusion 
+
+This report first introduces the data and its limitations, possible bias and sampling. Then explores the data, and conduct some hypothesis test to describe 4 research questions : ‘Does the number of COVID tests a student has taken in the past two months follow a Poisson distribution?’, ‘If the scale was 0 to 10, does the mean of student’s self-evaluated loneliness greater than 5?’, ‘Do students attending DATA2902 more confident in math than students attending DATA2002?’ and ‘Is there an association between the dominant hand and whether the students are currently located in Australia?’.
+
+For the first question, we noticed that the number of COVID tests a student has taken in the past two months does not follow a Poisson distribution. For the second question, we noticed that generally the students were in lonely mood.For the third question, we noticed that the average of the math confidence rates in DATA2002 group is less than the average of math confidence rates in DATA2902 (Advanced unit) group. For the last question, we noticed that the hand dominance and whether or not students are currently living in the Austria is independent.
+
+Further research is needed to overcome some limitations in each tests. 
+
+# Citation 
+
+## packages
+
+bookdown : Yihui Xie (2021). bookdown: Authoring Books and Technical Documents with R Markdown. R
+  package version 0.24.
+  
+tidyverse : Wickham et al., (2019). Welcome to the tidyverse. Journal of Open Source Software, 4(43),
+  1686, https://doi.org/10.21105/joss.01686
+  
+ggplot2 : H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016.
+
+janitor : Sam Firke (2021). janitor: Simple Tools for Examining and Cleaning Dirty Data. R package
+  version 2.1.0. https://CRAN.R-project.org/package=janitor
+  
+readr : Hadley Wickham and Jim Hester (2021). readr: Read Rectangular Text Data. R package version
+  2.0.0. https://CRAN.R-project.org/package=readr
+  
+rmakrdown:JJ Allaire and Yihui Xie and Jonathan McPherson and Javier Luraschi and Kevin Ushey and
+  Aron Atkins and Hadley Wickham and Joe Cheng and Winston Chang and Richard Iannone (2021).
+  rmarkdown: Dynamic Documents for R. R package version 2.10. URL
+  https://rmarkdown.rstudio.com.
+
+  Yihui Xie and J.J. Allaire and Garrett Grolemund (2018). R Markdown: The Definitive Guide.
+  Chapman and Hall/CRC. ISBN 9781138359338. URL https://bookdown.org/yihui/rmarkdown.
+
+  Yihui Xie and Christophe Dervieux and Emily Riederer (2020). R Markdown Cookbook. Chapman
+  and Hall/CRC. ISBN 9780367563837. URL https://bookdown.org/yihui/rmarkdown-cookbook.
+
+## data
+
+data used for this whole research : https://docs.google.com/spreadsheets/d/1-DmA1UUM6QmZyucYiutuZX4Q0omtSCDwSOCNzHibkto/export?format=csv
+
+## articles 
+
+definition of the random sampling : The Economic times. https://economictimes.indiatimes.com/definition/random-sampling
+
+motivation for research question2 : https://www.campaigntoendloneliness.org/wp-content/uploads/Loneliness-Measurement-Guidance1.pdf 
+
+motivation for research question 4 : The New Daily. Zona Black. What makes a left-hander? Aussie research brings the answer a step closer
+https://thenewdaily.com.au/life/science/2020/09/29/left-right-handed-why/ 
