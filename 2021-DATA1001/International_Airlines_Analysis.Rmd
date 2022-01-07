@@ -1,0 +1,206 @@
+---
+title: "Need to Revise \"China-Australia Year of Tourism\" initiative of 2017 to attract more Chinese tourists to Australia "
+subtitle: "Project 3"
+date: "University of Sydney | DATA1001 | May 2021"
+output:
+  html_document:
+    fig_caption: yes
+    number_sections: yes
+    self_contained: yes
+    theme: flatly
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    code_folding: hide
+---
+<br>
+
+# Client Analysis
+
+Australian and Chinese governments had declared 2017 as the “China-Australia Year of Tourism” to increase tourists. 
+
+Currently, they are planning to take another action to boost their tourism in 2022. They are organizing the specific plans to implement in 2022 by taking initiative-2017 as a baseline. 
+
+This report is for the client Phillipa Harrison, the managing director of an organization called Tourism Australia - the Australian Government agency responsible for attracting international visitors to Australia.  She wants to check whether the 2017-initiative created a meaningful increase in the number of Chinese tourists in Australia to decide whether the government should stick to the same plan taken in 2017 or revise it to increase Chinese tourists. 
+
+# Recommendation
+
+The client should revise the initiative 2017 and improve the initiative 2022. The statistical evidence showed that the initiative 2017 didn’t create meaningful difference in the number of Chinese tourists visiting Australia before the initiative (2016) and after the initiative (2017). 
+
+# Evidence 
+
+## Data
+
+Used the "International Airlines - Operated Flights and Seats" data.
+
+## How this report interpreted the column Route in the data
+
+If the Route is SHE-TAO-MEL, it is vague whether  SHE-TAO, TAO-MEL, SHE-TAO-MEL are all possible or people must start their journey from SHE and ends up at MEL (i.e., SHE-TAO-MEL only ). This report took the latter as SHE-TAO-MEL appears in the data both when the column International_City is Qingdao(TAO) and Shenyang(SHE) with the same number of Max_Seats and All_Flights. Therefore, this report counted the flights only with 0 in column Stops to avoid double-counting. In other words, if x amount of person took the SHE-TAO-MEL flight in March 2016, this report added x once to the number of Chinese visits Australia in March 2016.
+
+## Assumptions and possible limitations
+
+Following are the assumptions that are made in this report. They can be limitations of the report if they are wrong. 
+
+### Flights are fully booked
+
+### Nationality of passengers and their source country match 
+
+-The nationality of passengers is the same as their source location. 
+
+-The tourists who went to Australia from China are all considered Chinese tourists.
+
+-There is no chance for Chinese tourists to take flights to Australia from the cities outside of China. 
+
+### Chinese passengers in 2016 and 2017 are independent
+
+Passengers who went to Australia from China in 2016 are different from the passengers who went to Australia from China in 2017. (i.e., The 2 samples are independent.)
+
+### All passengers are tourists
+
+### The Number of tourists is equal to the number of passengers
+
+The number of Chinese tourists visiting Australia is equal to the number of passengers who took flights from China to Australia. 
+
+### The change in number of tourists get solely affected by 2017 initiative
+
+## Statistical anaylsis
+
+### Data Overview
+
+```{r}
+flights = read.csv("http://www.maths.usyd.edu.au/u/UG/JM/DATA1001/r/current/projects/2020data/flights.csv")
+
+
+## Quick snapshot
+dim(flights)
+str(flights)
+
+flights$Month_num  <- as.factor(flights$Month_num)
+
+```
+
+```{r, results="hide"}
+library(dplyr)
+library("plotly")
+```
+
+### Plot
+
+Calculated the yearly average of the total number of Chinese tourists in each month of 2016 and 2017. 
+
+```{r}
+
+#2016 
+num_of_chinese_tourists_2016 = flights %>% filter(In_Out == "I", 
+                                                  Service_Country == "China",
+                                                  Stops == 0,
+                                                  Year ==2016, 
+                                                  ) %>% group_by(Month_num) %>% summarise(total=sum(All_Flights * Max_Seats ))
+num_of_chinese_tourists_2016 
+
+graph_of_chinese_tourists_2016 = num_of_chinese_tourists_2016 %>% ggplot(.,aes(x=Month_num, y=total))+geom_bar(stat="identity",fill = "steelblue")+xlab("month")+ylab("number of Chinese tourists")+ggtitle("2016")
+graph_of_chinese_tourists_2016
+
+mean_of_chinese_tourists_2016=mean(num_of_chinese_tourists_2016$total) 
+mean_of_chinese_tourists_2016 #5209127
+```
+ 
+In 2016, the yearly average of the total number of Chinese tourists in each month was 5209127.
+
+```{r}
+num_of_chinese_tourists_2017 = flights %>% filter(In_Out == "I", 
+                                                  Service_Country == "China",
+                                                  Stops == 0,
+                                                  Year ==2017, 
+                                                  ) %>% group_by(Month_num) %>% summarise(total=sum(All_Flights * Max_Seats )) 
+num_of_chinese_tourists_2017
+
+graph_of_chinese_tourists_2017 = num_of_chinese_tourists_2017 %>% ggplot(.,aes(x=Month_num, y=total))+geom_bar(stat="identity",fill = "steelblue")+xlab("month")+ylab("number of Chinese tourists")+ggtitle("2017")
+graph_of_chinese_tourists_2017
+
+mean_of_chinese_tourists_2017 = mean(num_of_chinese_tourists_2017$total) 
+mean_of_chinese_tourists_2017 #5674503
+```
+
+In 2017, the yearly average of the total number of Chinese tourists in each month was 5674503.
+
+```{r}
+df<- data.frame(year=c("2016", "2017"), mean=c(mean_of_chinese_tourists_2016,mean_of_chinese_tourists_2017))
+
+ggplot(data=df, aes(x=year, y=mean))+geom_bar(stat="identity", width=0.5, fill = "steelblue") + geom_text(aes(label=round(mean, digits=0)), vjust = -0.3, size = 3.5)
+```
+
+The yearly average of the total number of Chinese tourists in each month in 2017 is higher than in 2016. It seems that the "China-Australia Year of Tourism" initiative had an impact on attracting more Chinese tourists to Australia.
+
+### T-test
+
+Used 2 sample T-test.
+
+#### Hypotheses 
+
+Let m1 = mean of the total number of Chinese tourists in each month in 2016.
+
+Let m2 = mean of the total number of Chinese tourists in each month in 2017. 
+
+H0 : m1 = m2.
+
+H1 : m1 < m2. 
+ 
+#### Assumptions 
+
+A1. The 2 Samples are independent. 
+
+The two samples contain different people. (in 3.3.2)
+ 
+A2. The 2 populations have an equal spread/variance
+
+The first two bar plots in 3.4.2 seem to have alike shape, that is, they have a similar spread. This report conducted F-Test. 
+
+```{r}
+var.test(num_of_chinese_tourists_2016$total,num_of_chinese_tourists_2017$total)
+```
+
+F-Test gives p-value = 0.7819 > 0.05, suggesting that data is consistent with equal variance. 
+
+A3. The 2 populations are Normal
+
+The first two bar plots in 3.4.2 do not seem to be Normal.This report conducted Shapiro-Wilk Test to test the normality. 
+
+```{r}
+shapiro.test(num_of_chinese_tourists_2016$total)
+shapiro.test(num_of_chinese_tourists_2017$total)
+```
+
+The p-value is both less than 0.05. We can conclude that populations couldn't be normally distributed. The normality assumption seems to be violated. 
+However, this t-test should still be valid since the sample size is large enough for the Central Limit Theorem to ensure this t-test is Normally distributed. 
+
+#### Calculate T statistic and P value
+
+```{r}
+t.test(num_of_chinese_tourists_2016$total, num_of_chinese_tourists_2017$total, var.equal = T, alternative="less")
+```
+
+T statistic : -0.61376, p- value : 0.2728 
+
+As the p-value > 0.05, we retain the null hypothesis.
+
+#### Conclusion
+
+Thus the data is consistent with the hypothesis that the mean of the number of Chinese visitors monthly is equal in 2016 and 2017.
+
+# Conclusion
+
+The data suggests that the "China-Australia Year of Tourism" 2017 does not attract meaningfully more Chinese tourists even though 2017 seems to have increased average. 
+This report recommends the client to revise the original initiative in 2017 if she aims to boost the number of Chinese tourists in 2022 through the new initiative.
+
+# Reference
+
+
+BITRE. (2016).International Airlines - Operated Flights and Seats. https://data.gov.au/data/dataset/e82787e4-a480-4189-b963-1d0b6088103e
+ 
+Anthony,D. (2016). China-Australia Year of Tourism 2017: What does it mean for Australians?.
+https://www.traveller.com.au/chinaaustralia-year-of-tourism-2017-what-does-it-mean-for-australians-gtfqmx
+
+Mariam,W.(2016). Chinese airlines flying to Australia: China-Australia Year of Tourism(CAYOT) to increase tourism. https://www.traveller.com.au/chinese-airlines-flying-to-australia-chinaaustralia-year-of-tourism-cayot-to-increase-tourism-gtew6s
+
+Tourism Australia. Tourisms Australia.https://www.tourism.australia.com/en
